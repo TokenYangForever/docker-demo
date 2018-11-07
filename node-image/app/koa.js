@@ -59,10 +59,6 @@ const redirect = ctx => {
   ctx.response.body = '<a href="/">Index Page</a>'
 }
 
-
-
-
-
 router.get('/', main).get('/about', about).get('/redirect', redirect)
 
 app.use(router.routes()).use(router.allowedMethods())
