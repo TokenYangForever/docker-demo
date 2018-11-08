@@ -1,8 +1,10 @@
 const Koa = require('koa')
 const Router = require('koa-router')
 const session = require('koa-session')
+const buffer = require('buffer');
 const app = new Koa()
 const router = new Router()
+const fs = require('fs')
 const about = ctx => {
   ctx.response.type = 'html'
   ctx.response.body = '<a href="/">Index Page</a>'
@@ -25,14 +27,19 @@ const CONFIG = {
 
 const errorHandler = async (ctx, next) => {
   try {
+    // 设置头部
+    ctx.response.set({ 'Accept': '*', 'Access-Control-Allow-Origin': '*' })
     await next()
   } catch (err) {
     ctx.response.status = err.statusCode || err.status || 500;
     ctx.response.body = {
-      message: err.message
+      message: err.message,
+      statusCode: 500
     };
   }
 }
+app.use(errorHandler)
+
 // app.use(errorHandler).use(session(CONFIG, app)).use(async (ctx, next) => {
 //   // ignore favicon
 //   if (ctx.path === '/favicon.ico') return;
@@ -59,7 +66,20 @@ const redirect = ctx => {
   ctx.response.body = '<a href="/">Index Page</a>'
 }
 
-router.get('/', main).get('/about', about).get('/redirect', redirect)
+const video = async (ctx, next) => {
+  try {
+    let data = fs.readFileSync('simple.mp4')
+    ctx.response.body = data
+  } catch (e) {
+    return Promise.reject({
+      status: 500,
+      message: '视频传输错误'
+    })
+  }
+  next()
+}
+
+router.get('/', main).get('/about', about).get('/redirect', redirect).get('/video', video)
 
 app.use(router.routes()).use(router.allowedMethods())
 app.listen(3001)
